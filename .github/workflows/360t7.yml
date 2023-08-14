@@ -123,15 +123,6 @@ jobs:
       run: |
         # 整理固件包时候,删除您不想要的固件或者文件,让它不需要上传到Actions空间
         cd openwrt/bin/targets/*/*
-        rm -rf packages
-        rm -rf version.buildinfo
-        rm -rf profiles.json
-        rm -rf *rootfs*
-        rm -rf *kernel*
-        rm -rf *.manifest
-        rm -rf sha256sums
-        mv *sysupgrade.bin ${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-108M-sysupgrade.bin
-        mv *factory.bin ${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-108M-factory.bin
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
@@ -164,11 +155,7 @@ jobs:
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
 
-    - name: PushPlus 通知
-      if: env.PUSHPLUS_TOKEN
-      continue-on-error: true
-      run: |
-        curl -k -d "title=OpenWrt-360T7固件编译成功" -d "content=编译固件版本：${{ env.FIRMWARE_VERSION }}%0A编译开始时间：${{ env.START_DATE }}%0A编译结束时间：$(date +'%Y年%m月%d日 %H点%M分%S秒')" -d "token=${{ env.PUSHPLUS_TOKEN }}" "http://www.pushplus.plus/send"
+    
 
     - name: 删除工作流运行
       uses: GitRML/delete-workflow-runs@main
