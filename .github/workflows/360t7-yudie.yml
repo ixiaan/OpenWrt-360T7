@@ -52,11 +52,7 @@ jobs:
         echo "FIRMWARE_VERSION=$(date +"%y%m%d%H")" >> $GITHUB_ENV
         echo "START_DATE=$(date +'%Y年%m月%d日 %H点%M分%S秒')" >> $GITHUB_ENV
 
-    - name: PushPlus 通知
-      if: env.PUSHPLUS_TOKEN
-      continue-on-error: true
-      run: |
-        curl -k -d "title=开始编译OpenWrt-360T7固件" -d "content=编译固件版本：${{ env.FIRMWARE_VERSION }}%0A编译开始时间：${{ env.START_DATE }}" -d "token=${{ env.PUSHPLUS_TOKEN }}" "http://www.pushplus.plus/send"
+    
     
     - name: 下载源码
       working-directory: /workdir
@@ -88,7 +84,7 @@ jobs:
         git clone https://github.com/kiddin9/luci-theme-edge.git
         # git clone https://github.com/jerrykuku/lua-maxminddb.git
         # git clone https://github.com/jerrykuku/luci-app-vssr.git  
-        git clone https://github.com/sbwml/luci-app-alist
+        # git clone https://github.com/sbwml/luci-app-alist
        
 
     - name: 加载自定义配置
