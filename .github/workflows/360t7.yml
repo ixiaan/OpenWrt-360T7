@@ -49,14 +49,10 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
-        echo "FIRMWARE_VERSION=$(date +"%y%m%d")" >> $GITHUB_ENV
+        echo "FIRMWARE_VERSION=$(date +"%y%m%d-%H")" >> $GITHUB_ENV
         echo "START_DATE=$(date +'%Y年%m月%d日 %H点%M分%S秒')" >> $GITHUB_ENV
 
-    - name: PushPlus 通知
-      if: env.PUSHPLUS_TOKEN
-      continue-on-error: true
-      run: |
-        curl -k -d "title=开始编译OpenWrt-360T7固件" -d "content=编译固件版本：${{ env.FIRMWARE_VERSION }}%0A编译开始时间：${{ env.START_DATE }}" -d "token=${{ env.PUSHPLUS_TOKEN }}" "http://www.pushplus.plus/send"
+   
     
     - name: 下载源码
       working-directory: /workdir
@@ -83,6 +79,7 @@ jobs:
         cd openwrt/package/feeds/luci
         rm -rf luci-app-xlnetacc/
         rm -rf luci-theme-edge
+        rm -rf luci-app-alist
         git clone https://github.com/ixiaan/luci-app-xlnetacc.git
         # git clone https://github.com/MapesxGM/luci-app-eqos.git
         git clone https://github.com/kiddin9/luci-theme-edge.git
