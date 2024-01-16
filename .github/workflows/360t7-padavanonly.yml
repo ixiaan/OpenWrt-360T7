@@ -15,7 +15,7 @@ on:
     inputs:
       manual:
         description: '手动触发一次编译'
-  schedule:
+  #schedule:
     - cron: 0 16 * * 5
 
 env:
