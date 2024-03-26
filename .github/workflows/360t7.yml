@@ -144,7 +144,7 @@ jobs:
         rm -rf *kernel*
         rm -rf *.manifest
         rm -rf sha256sums
-        mv *sysupgrade.bin ${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-108M-sysupgrade.bin
+        mv *sysupgrade.bin ${{ env.FIRMWARE_VERSION }}-OpenWrt-jiashan-360T7-108M-sysupgrade.bin
         # mv *factory.bin ${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-108M-factory.bin
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
@@ -153,14 +153,14 @@ jobs:
       uses: actions/upload-artifact@main
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        name: ${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-Yudie
+        name: ${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-jiashan
         path: ${{ env.FIRMWARE }}
 
     - name: 创建release标签
       id: tag
       if: steps.organize.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        release_tag="${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-Yudie"
+        release_tag="${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-jiashan"
         echo "编译时间：$(date +'%Y年%m月%d日 %H点%M分')" >> release.txt
         echo "默认网关：192.168.9.1" >> release.txt
         echo "默认插件："$(cat extra.config|sed 's/#.*//g;s/CONFIG_PACKAGE_.*=n//g'|sed 's/CONFIG_PACKAGE_\(.*\)=y/\1/g')|sed 's/ /、/g' >> release.txt
