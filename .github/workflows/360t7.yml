@@ -8,17 +8,15 @@
 # Description: Build OpenWrt using GitHub Actions
 #
 
-name: OpenWrt-360T7-jiashan
+name: OpenWrt-360T7
 
 on:
   workflow_dispatch:
     inputs:
       manual:
         description: '手动触发一次编译'
-  #schedule:
-    #- cron: 0 16 * * 5
-permissions:
-  contents: write
+  schedule:
+    - cron: 0 16 * * 5
 
 env:
   REPO_URL: https://github.com/hanwckf/immortalwrt-mt798x
@@ -29,7 +27,6 @@ env:
   DIY_P2_SH: diy2.sh
   UPLOAD_FIRMWARE: true
   UPLOAD_RELEASE: true
-  PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
   TZ: Asia/Shanghai
 
 jobs:
@@ -44,27 +41,14 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        docker rmi `docker images -q`
-        echo "Deleting files, please wait ..."
-        sudo rm -rf \
-          /usr/share/dotnet \
-          /usr/local/lib/android \
-          /opt/ghc \
-          /etc/mysql \
-          /etc/php
-        sudo -E apt-get -y purge azure-cli* docker* ghc* zulu* hhvm* llvm* firefox* google* dotnet* aspnetcore* powershell* openjdk* adoptopenjdk* mysql* php* mongodb* moby* snap* || true
-        sudo -E apt-get update
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo bash -c 'bash <(curl -s https://build-scripts.immortalwrt.eu.org/init_build_environment.sh)'
-        #sudo -E apt-get -y libfuse-dev
-        sudo -E apt-get -y autoremove --purge
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
-        echo "FIRMWARE_VERSION=$(date +"%y%m%d%H")" >> $GITHUB_ENV
+        echo "FIRMWARE_VERSION=$(date +"%y%m%d")" >> $GITHUB_ENV
         echo "START_DATE=$(date +'%Y年%m月%d日 %H点%M分%S秒')" >> $GITHUB_ENV
 
-    
     
     - name: 下载源码
       working-directory: /workdir
@@ -75,7 +59,6 @@ jobs:
 
     - name: 加载软件源
       run: |
-        [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
         chmod +x $DIY_P1_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P1_SH
@@ -85,21 +68,6 @@ jobs:
 
     - name: 安装软件源
       run: cd openwrt && ./scripts/feeds install -a
-    
-    - name: More App
-      run: |
-        cd openwrt
-        rm -rf ./feeds/luci/themes/luci-theme-edge
-        git clone https://github.com/kiddin9/luci-theme-edge.git package/luci-theme-edge
-        rm -rf feeds/packages/lang/golang
-        git clone https://github.com/sbwml/packages_lang_golang -b 20.x feeds/packages/lang/golang
-        rm -rf ./feeds/luci/applications/luci-app-mosdns/
-        rm -rf ./feeds/packages/net/mosdns/
-        rm -rf ./package/custom_packages/mosdns
-        git clone https://github.com/sbwml/luci-app-mosdns -b v5 ./package/custom_packages/mosdns
-        rm -rf ./feeds/luci/themes/luci-theme-argon/
-        git clone https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon
-        rm -rf package/luci-theme-argon/README* package/luci-theme-argon/Screenshots/       
 
     - name: 加载自定义配置
       run: |
@@ -124,13 +92,9 @@ jobs:
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        make -j$(nproc) || make -j1 || make -j1 V=s || (curl -k -d "title=OpenWrt-360T7固件编译失败" -d "content=编译固件版本：${{ env.FIRMWARE_VERSION }}%0A编译开始时间：${{ env.START_DATE }}%0A编译结束时间：$(date +'%Y年%m月%d日 %H点%M分%S秒')" -d "token=${{ env.PUSHPLUS_TOKEN }}&channel=cp&webhook=server" "http://www.pushplus.plus/send")
+        make -j$(nproc) || make -j1 || make -j1 V=s 
         echo "status=success" >> $GITHUB_OUTPUT
-    - name: 删除多余
-      run: |
-        cd openwrt
-        rm -rf feeds/
-        
+
     - name: 整理固件
       id: organize
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled()
@@ -144,8 +108,8 @@ jobs:
         rm -rf *kernel*
         rm -rf *.manifest
         rm -rf sha256sums
-        mv *sysupgrade.bin ${{ env.FIRMWARE_VERSION }}-OpenWrt-jiashan-360T7-108M-sysupgrade.bin
-        # mv *factory.bin ${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-108M-factory.bin
+        mv *sysupgrade.bin ${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-108M-sysupgrade.bin
+        mv *factory.bin ${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-108M-factory.bin
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
@@ -153,14 +117,14 @@ jobs:
       uses: actions/upload-artifact@main
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        name: ${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-jiashan
+        name: ${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7
         path: ${{ env.FIRMWARE }}
 
     - name: 创建release标签
       id: tag
       if: steps.organize.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        release_tag="${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-jiashan"
+        release_tag="${{ env.FIRMWARE_VERSION }}-OpenWrt-360T7-嘉善"
         echo "编译时间：$(date +'%Y年%m月%d日 %H点%M分')" >> release.txt
         echo "默认网关：192.168.9.1" >> release.txt
         echo "默认插件："$(cat extra.config|sed 's/#.*//g;s/CONFIG_PACKAGE_.*=n//g'|sed 's/CONFIG_PACKAGE_\(.*\)=y/\1/g')|sed 's/ /、/g' >> release.txt
@@ -177,6 +141,13 @@ jobs:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
+
+    
+    - name: 删除工作流运行
+      uses: GitRML/delete-workflow-runs@main
+      with:
+        retain_days: 300
+        keep_minimum_runs: 30
 
     - name: 删除旧的releases
       uses: dev-drprasad/delete-older-releases@v0.1.0
