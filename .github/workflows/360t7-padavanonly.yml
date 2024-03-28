@@ -84,6 +84,16 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
+    - name: More App
+      run: |
+        cd openwrt
+        rm -rf feeds/packages/lang/golang
+        git clone https://github.com/sbwml/packages_lang_golang -b 20.x feeds/packages/lang/golang
+        rm -rf ./feeds/luci/applications/luci-app-mosdns/
+        rm -rf ./feeds/packages/net/mosdns/
+        rm -rf ./package/custom_packages/mosdns
+        git clone https://github.com/sbwml/luci-app-mosdns -b v5 ./package/custom_packages/mosdns 
+
     - name: 下载包
       id: package
       run: |
